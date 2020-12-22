@@ -25,4 +25,5 @@ let rec jolt_differencies adapters jolt1Differencies jolt3Differences = match ad
     | h::t -> (jolt_differencies t jolt1Differencies jolt3Differences)
 ;;
 
+(IntSet.add adaptersSet 0);;
 (print_int (jolt_differencies (IntSet.elements adaptersSet) 0 0));;
