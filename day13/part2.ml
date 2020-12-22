@@ -1,11 +1,8 @@
 open Printf
-open Int64
 open String
 open List
   
 let input = "input.txt";;
-
-let string_to_int str = (Int64.to_int (Int64.of_string str));;
 
 let file = (open_in input);;
 
@@ -16,7 +13,7 @@ let rec readBuses busesIds currentIndex result product = match busesIds with
     | [] -> (result, product)
     | h::t when (String.compare h "x") = 0 -> (readBuses t (currentIndex + 1) result product)
     | h::t -> 
-    let busId = (string_to_int h) in
+    let busId = (int_of_string h) in
     (readBuses t (currentIndex + 1) (((busId - currentIndex), busId)::result) (product * busId))
     ;;
 
