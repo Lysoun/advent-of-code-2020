@@ -1,11 +1,8 @@
 open Printf
-open Int64
 open Array
 open Int
   
 let input = "input.txt";;
-
-let string_to_int str = (Int64.to_int (Int64.of_string str));;
 
 let directions = (Array.of_list (['E'; 'S'; 'W'; 'N']));;
 
@@ -32,7 +29,7 @@ let rec input_lines file (x, y) currentlyFacing  =
    match try (input_line file) with End_of_file -> "" with
       | "" -> (Int.abs x) + (Int.abs y)
       | line -> 
-      let value = (string_to_int (String.sub line 1 ((String.length line) - 1))) in
+      let value = (int_of_string (String.sub line 1 ((String.length line) - 1))) in
       let instruction = (String.get line 0) in
       if (instruction = 'L') || (instruction = 'R') 
       then (input_lines file (x,y) (turn currentlyFacing instruction value))
