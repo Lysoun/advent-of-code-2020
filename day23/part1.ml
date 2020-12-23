@@ -1,89 +1,84 @@
+open Hashtbl
 open String
 open List
-open Set
-open Int
+open Array
 
 module IntSet = Set.Make(Int);;
 
-let range n length = 
-    let rec aux i = 
-        if i = length
-        then []
-        else (n + i)::(aux (i + 1))
+let input = "589174263";;
+
+let cupsArray = Array.of_list (List.map (int_of_string) (List.map (function character -> String.make 1 character) (List.of_seq (String.to_seq input))));;
+let cupsNumber = (Array.length cupsArray);;
+
+let print_cups cups = 
+    let rec aux printedNumber cup =
+        if printedNumber < (cupsNumber - 1)
+        then ((print_int cup); (aux (printedNumber + 1) (Hashtbl.find cups cup)))
     in
-    (aux 0)
+    (aux 0 (Hashtbl.find cups 1));
+    (print_string "\n")
 ;;
 
-let get_array_cyclical array index arrayLength = (Array.get array (index mod arrayLength));;
-
-let array_cyclical_sub array startingIndex subLength   = 
-    let arrayLength = (Array.length array) in
-    List.map (function a -> (get_array_cyclical array a arrayLength)) (range startingIndex subLength)
-;;
-
-let find_current_cup_index cupsArray currentCup =  
-    let rec aux i = 
-        if (Array.get cupsArray i) = currentCup
-        then i
-        else (aux (i + 1))
+let pick_cups cups currentCup = 
+    let pickedUpCups = (Array.make 3 0) in
+    
+    let rec pick_cups_aux cup index = 
+        if index <= 2
+        then (
+            let nextCup = (Hashtbl.find cups cup) in
+            (Array.set pickedUpCups index nextCup);
+            (pick_cups_aux (nextCup) (index + 1))
+        )
     in
-    (aux 0)
+
+    (pick_cups_aux currentCup 0);
+    (Hashtbl.replace cups currentCup (Hashtbl.find cups (Array.get pickedUpCups 2)));
+    pickedUpCups
 ;;
 
-let pick_cups cupsArray currentCup =
-    let cupsNumber = (Array.length cupsArray) in
-    let currentCupIndex = (find_current_cup_index cupsArray currentCup) in
-    ((array_cyclical_sub cupsArray (currentCupIndex + 1) 3), (array_cyclical_sub cupsArray (currentCupIndex + 4) (cupsNumber - 3)))
-;;
-
-let select_destination_cup cups currentCup = 
-    let cupsSet = (IntSet.of_list cups) in
+let select_destination_cup cups pickedUpCups currentCup = 
+    let pickedUpCupsSet = (IntSet.of_seq (Array.to_seq pickedUpCups)) in
     let rec aux cup = 
         if cup < 1
-        then (IntSet.max_elt cupsSet)
+        then (aux cupsNumber)
         else 
-            if (IntSet.mem cup cupsSet)
-            then cup
-            else (aux (cup - 1))
+            if (IntSet.mem cup pickedUpCupsSet)
+            then (aux (cup - 1))
+            else cup
     in
     (aux (currentCup - 1))
 ;;
 
-let place_cups destinationCup pickedUpCups remainingCups = 
-    let rec aux cups = match cups with 
-        | [] -> []
-        | h::t when h = destinationCup -> h::pickedUpCups@t
-        | h::t -> h::(aux t) 
-    in
-    (aux remainingCups)
+let place_cups destinationCup pickedUpCups cups = 
+    let cupAfterPickedUpCups = (Hashtbl.find cups destinationCup) in
+    (Hashtbl.replace cups destinationCup (Array.get pickedUpCups 0));
+    (Hashtbl.replace cups (Array.get pickedUpCups 2) cupAfterPickedUpCups);
 ;;
 
-let select_new_current_cup movedCups currentCup = 
-    let movedCupsArray = (Array.of_list movedCups) in
-    get_array_cyclical movedCupsArray ((find_current_cup_index movedCupsArray currentCup) + 1) (Array.length movedCupsArray)
+let select_new_current_cup cups currentCup = 
+    Hashtbl.find cups currentCup
 ;;
 
 let execute_move cups currentCup = 
-    let cupsArray = (Array.of_list cups) in
-    let (pickedUpCups, remainingCups) = (pick_cups cupsArray currentCup) in
-    let destinationCup = (select_destination_cup remainingCups currentCup) in
-    let movedCups = (place_cups destinationCup pickedUpCups remainingCups) in
-    let newCurrentCup = (select_new_current_cup movedCups currentCup) in
-    (movedCups, newCurrentCup)
+    let pickedUpCups = (pick_cups cups currentCup) in
+    let destinationCup = (select_destination_cup cups pickedUpCups currentCup) in
+    (place_cups destinationCup pickedUpCups cups);
+    let newCurrentCup = (select_new_current_cup cups currentCup) in
+    (cups, newCurrentCup)
 ;;
 
 let move_cups cups = 
-    let rec move_cups_100_times i (cups, currentCup) = 
-        if i >= 100 
+    let rec move_cups_aux i movesNumber (cups, currentCup) = 
+        if i >= movesNumber 
             then cups
         else
-            (move_cups_100_times (i + 1) (execute_move cups currentCup))
+            (move_cups_aux (i + 1) movesNumber (execute_move cups currentCup))
     in
 
-    move_cups_100_times 0 (cups, (List.hd cups))
+    move_cups_aux 0 100 (cups, 5)
 ;;
 
-let input = "589174263";;
-let cups = List.map (int_of_string) (List.map (function character -> String.make 1 character) (List.of_seq (String.to_seq input)));;
-let movedCups = Array.of_list (move_cups cups);;
-List.iter (function cup -> print_int cup) (array_cyclical_sub movedCups ((find_current_cup_index movedCups 1) + 1) (Array.length movedCups - 1));;
+let cups = Hashtbl.create cupsNumber;;
+(Array.iteri (function index -> function cup -> (Hashtbl.add cups cup (Array.get cupsArray ((index + 1) mod cupsNumber)))) cupsArray);;
+(move_cups cups);;
+(print_cups cups);;
