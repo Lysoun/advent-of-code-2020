@@ -1,5 +1,4 @@
 open Printf
-open Int64
 open String
 open Str
 open Array
@@ -10,8 +9,6 @@ let input = "input.txt";;
 
 let maskExtractionRegexp = Str.regexp "^mask = \\(.+\\)";;
 let writingMemoryExtractionRegexp = Str.regexp "^mem\\[\\([0-9]+\\)\\] = \\([0-9]+\\)";;
-
-let string_to_int str = (Int64.to_int (Int64.of_string str));;
 
 let rec int_to_binary_aux binary index number = match number with 
     | 0 -> binary
@@ -38,7 +35,7 @@ let apply_bit_mask index bit binary = match bit with
 ;;
 
 let apply_mask mask str = 
-    let binary = (int_to_binary (string_to_int str)) in
+    let binary = (int_to_binary (int_of_string str)) in
     let iter_function index bit = (apply_bit_mask index bit binary) in
     (Array.iteri iter_function mask);
     (binary_to_int binary)
@@ -50,12 +47,10 @@ let rec process_input file currentMask memory =
       | line when (Str.string_match maskExtractionRegexp line 0) -> (process_input file (Array.of_seq (String.to_seq (Str.matched_group 1 line))) memory)
       | line ->  
         (Str.string_match writingMemoryExtractionRegexp line 0); 
-        let key = (string_to_int (Str.matched_group 1 line)) in
+        let keys = (apply_mask currentMask (Str.matched_group 1 line)) in
         let value = (apply_mask currentMask (Str.matched_group 2 line)) in
-        (Hashtbl.replace memory key value);
+        (List.iter (function key -> (Hashtbl.replace memory key value)) keys);
         (process_input file currentMask memory)
     ;;
 
-let add_ints i1 i2 = i1 + i2;;
-
-print_int (Seq.fold_left (add_ints) 0 (Hashtbl.to_seq_values (process_input (open_in input) (Array.make 0 'X') (Hashtbl.create 550))));;
+print_int (Seq.fold_left (+) 0 (Hashtbl.to_seq_values (process_input (open_in input) (Array.make 0 'X') (Hashtbl.create 550))));;
