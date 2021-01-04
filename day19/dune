@@ -1,0 +1,5 @@
+(
+    executable
+    (name part1)
+    (libraries humane_re)
+)
